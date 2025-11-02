@@ -22,8 +22,7 @@ class Phone(Field):
     def _validate(value: str):
         if not isinstance(value, str):
             raise ValueError("Phone must be a string of 10 digits")
-        digits = "".join(ch for ch in value if ch.isdigit())
-        if len(digits) != 10 or not digits.isdigit():
+        if len(value) != 10 or not value.isdigit():
             raise ValueError("Phone must contain exactly 10 digits")
 
     @property
@@ -33,7 +32,7 @@ class Phone(Field):
     @value.setter
     def value(self, new_value: str):
         self._validate(new_value)
-        self._value = "".join(ch for ch in new_value if ch.isdigit())
+        self._value = new_value
 
 
 class Record:
@@ -42,30 +41,28 @@ class Record:
         self.phones: list[Phone] = []
 
     def add_phone(self, phone: str):
-        """Додає телефон (рядок) до списку телефонів."""
+        """Додає новий номер (рядок з 10 цифр) до списку телефонів."""
         self.phones.append(Phone(phone))
 
     def remove_phone(self, phone: str):
-        """Видаляє телефон, що дорівнює значенню phone."""
-        norm = Phone(phone).value
-        self.phones = [p for p in self.phones if p.value != norm]
+        """Видаляє перший збіг номера phone, якщо він існує."""
+        ph = self.find_phone(phone)
+        if ph:
+            self.phones.remove(ph)
 
     def edit_phone(self, old_phone: str, new_phone: str):
-        """Заміна першої появи old_phone на new_phone."""
-        old_norm = Phone(old_phone).value
-        new_obj = Phone(new_phone)
-        for i, p in enumerate(self.phones):
-            if p.value == old_norm:
-                self.phones[i] = new_obj
-                return
-        # якщо не знайдено — нічого не робимо
+        """
+        Замінює перший збіг old_phone на new_phone (валідація у Phone.value)
+        """
+        ph = self.find_phone(old_phone)
+        if ph:
+            ph.value = new_phone
 
-    def find_phone(self, phone: str) -> str | None:
-        """Повертає телефон (рядок) або None, якщо не знайдено."""
-        norm = Phone(phone).value
+    def find_phone(self, phone: str) -> Phone | None:
+        """Повертає об'єкт Phone або None, якщо не знайдено."""
         for p in self.phones:
-            if p.value == norm:
-                return p.value
+            if p.value == phone:
+                return p
         return None
 
     def __str__(self):
